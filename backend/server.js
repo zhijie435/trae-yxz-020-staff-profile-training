@@ -53,10 +53,10 @@ app.get('/api/employee/profile', (req, res) => {
     t => t.status === 'completed' && t.month === currentMonth
   ).length;
 
-  const scoredTasks = mockTasks.filter(t => t.score !== null);
-  const highScoreTasks = scoredTasks.filter(t => t.score >= 80);
-  const satisfactionRate = scoredTasks.length > 0
-    ? parseFloat(((highScoreTasks.length / scoredTasks.length) * 100).toFixed(1))
+  const completedWithScore = mockTasks.filter(t => t.status === 'completed' && t.score !== null);
+  const highScoreTasks = completedWithScore.filter(t => t.score >= 80);
+  const satisfactionRate = completedWithScore.length > 0
+    ? parseFloat(((highScoreTasks.length / completedWithScore.length) * 100).toFixed(1))
     : 0;
 
   res.json({
