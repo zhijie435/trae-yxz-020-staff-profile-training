@@ -39,16 +39,36 @@ const employees = [
 
 app.get('/api/employee/profile', (req, res) => {
   const employee = employees[0];
+
+  const completedTasks = mockTasks.filter(t => t.status === 'completed').length;
+  const cancelledTasks = mockTasks.filter(t => t.status === 'cancelled').length;
+  const totalValidTasks = mockTasks.length - cancelledTasks;
+  const deliveryRate = totalValidTasks > 0
+    ? parseFloat(((completedTasks / totalValidTasks) * 100).toFixed(1))
+    : 0;
+
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const monthlyCompletedTasks = mockTasks.filter(
+    t => t.status === 'completed' && t.month === currentMonth
+  ).length;
+
+  const scoredTasks = mockTasks.filter(t => t.score !== null);
+  const highScoreTasks = scoredTasks.filter(t => t.score >= 80);
+  const satisfactionRate = scoredTasks.length > 0
+    ? parseFloat(((highScoreTasks.length / scoredTasks.length) * 100).toFixed(1))
+    : 0;
+
   res.json({
     code: 0,
     message: 'success',
     data: {
       name: employee.name,
       employeeId: employee.employeeId,
-      completedTasks: employee.completedTasks,
-      monthlyCompletedTasks: employee.monthlyCompletedTasks,
-      deliveryRate: employee.deliveryRate,
-      satisfactionRate: employee.satisfactionRate
+      completedTasks,
+      monthlyCompletedTasks,
+      deliveryRate,
+      satisfactionRate
     }
   });
 });
