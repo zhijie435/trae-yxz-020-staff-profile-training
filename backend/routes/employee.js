@@ -1,5 +1,5 @@
 const express = require('express');
-const { employees, mockTasks } = require('../data/mockData');
+const { employees, mockTasks, trainingMaterials } = require('../data/mockData');
 const { authenticateToken } = require('../middleware/auth');
 const { calculateEmployeeStats } = require('../utils/statsCalculator');
 
@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get('/profile', authenticateToken, (req, res) => {
   const employee = req.employee;
-  const stats = calculateEmployeeStats(mockTasks);
+  const stats = calculateEmployeeStats(mockTasks, trainingMaterials);
 
   res.json({
     code: 0,
@@ -18,13 +18,14 @@ router.get('/profile', authenticateToken, (req, res) => {
       completedTasks: stats.completedTasks,
       monthlyCompletedTasks: stats.monthlyCompletedTasks,
       deliveryRate: stats.deliveryRate,
-      satisfactionRate: stats.satisfactionRate
+      satisfactionRate: stats.satisfactionRate,
+      trainingCompletionRate: stats.trainingCompletionRate
     }
   });
 });
 
 router.get('/stats', authenticateToken, (req, res) => {
-  const stats = calculateEmployeeStats(mockTasks);
+  const stats = calculateEmployeeStats(mockTasks, trainingMaterials);
 
   res.json({
     code: 0,
@@ -36,7 +37,13 @@ router.get('/stats', authenticateToken, (req, res) => {
       monthlyCompletedTasks: stats.monthlyCompletedTasks,
       deliveryRate: stats.deliveryRate,
       satisfactionRate: stats.satisfactionRate,
-      currentMonth: stats.currentMonth
+      currentMonth: stats.currentMonth,
+      trainingCompletionRate: stats.trainingCompletionRate,
+      completedTrainingCount: stats.completedTrainingCount,
+      totalTrainingCount: stats.totalTrainingCount,
+      avgTrainingProgress: stats.avgTrainingProgress,
+      inProgressTrainingCount: stats.inProgressTrainingCount,
+      notStartedTrainingCount: stats.notStartedTrainingCount
     }
   });
 });

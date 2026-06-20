@@ -73,7 +73,7 @@ const handleLogin = async () => {
   submitting.value = true;
 
   try {
-    const result = await api.auth.login({ employeeId, password });
+    const result = await api.auth.login({ employeeId, password }, router);
     if (result && result.code === 0) {
       localStorage.setItem('token', result.data.token);
       localStorage.setItem('employeeInfo', JSON.stringify(result.data.employee));

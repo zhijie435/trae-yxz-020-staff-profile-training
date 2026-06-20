@@ -1,4 +1,4 @@
-function calculateEmployeeStats(tasks) {
+function calculateEmployeeStats(tasks, trainingMaterials = []) {
   const completedTasks = tasks.filter(t => t.status === 'completed').length;
   const cancelledTasks = tasks.filter(t => t.status === 'cancelled').length;
   const totalValidTasks = tasks.length - cancelledTasks;
@@ -18,6 +18,27 @@ function calculateEmployeeStats(tasks) {
     ? parseFloat(((highScoreTasks.length / completedWithScore.length) * 100).toFixed(1))
     : 0;
 
+  let trainingCompletionRate = 0;
+  let completedTrainingCount = 0;
+  let totalTrainingCount = trainingMaterials.length;
+  if (trainingMaterials.length > 0) {
+    completedTrainingCount = trainingMaterials.filter(t => t.progress === 100).length;
+    trainingCompletionRate = parseFloat(
+      ((completedTrainingCount / trainingMaterials.length) * 100).toFixed(1)
+    );
+  }
+
+  const avgTrainingProgress = totalTrainingCount > 0
+    ? parseFloat(
+        (trainingMaterials.reduce((sum, t) => sum + t.progress, 0) / totalTrainingCount).toFixed(1)
+      )
+    : 0;
+
+  const inProgressTrainingCount = trainingMaterials.filter(
+    t => t.progress > 0 && t.progress < 100
+  ).length;
+  const notStartedTrainingCount = trainingMaterials.filter(t => t.progress === 0).length;
+
   return {
     completedTasks,
     cancelledTasks,
@@ -25,7 +46,13 @@ function calculateEmployeeStats(tasks) {
     deliveryRate,
     currentMonth,
     monthlyCompletedTasks,
-    satisfactionRate
+    satisfactionRate,
+    trainingCompletionRate,
+    completedTrainingCount,
+    totalTrainingCount,
+    avgTrainingProgress,
+    inProgressTrainingCount,
+    notStartedTrainingCount
   };
 }
 

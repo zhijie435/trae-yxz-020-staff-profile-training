@@ -29,8 +29,18 @@ async function request(url, options = {}, router) {
       return null;
     }
 
-    const result = await res.json();
-    return result;
+    const text = await res.text();
+    if (!text) {
+      return { code: -1, message: '服务器返回空响应' };
+    }
+
+    try {
+      const result = JSON.parse(text);
+      return result;
+    } catch (parseError) {
+      console.error('JSON parse failed:', parseError, 'Response:', text);
+      return { code: -1, message: '服务器响应格式错误' };
+    }
   } catch (e) {
     console.error('API request failed:', e);
     return { code: -1, message: '网络请求失败，请稍后重试' };
@@ -39,10 +49,10 @@ async function request(url, options = {}, router) {
 
 const api = {
   auth: {
-    login: (data) => request('/api/employee/login', {
+    login: (data, router) => request('/api/employee/login', {
       method: 'POST',
       body: JSON.stringify(data)
-    }),
+    }, router),
     logout: (router) => request('/api/employee/logout', {
       method: 'POST'
     }, router)

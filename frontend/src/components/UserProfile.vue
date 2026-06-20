@@ -78,6 +78,23 @@
             <div class="task-stat-label">用户好评率</div>
           </div>
         </div>
+
+        <div class="task-stat-card">
+          <div class="task-stat-icon training-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+          </div>
+          <div class="task-stat-info">
+            <div class="task-stat-value" v-if="!loading">
+              <span class="number">{{ profile.trainingCompletionRate }}</span>
+              <span class="unit">%</span>
+            </div>
+            <div class="task-stat-value skeleton-value" v-else></div>
+            <div class="task-stat-label">培训完成率</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -202,7 +219,8 @@ const profile = ref({
   completedTasks: 0,
   monthlyCompletedTasks: 0,
   deliveryRate: 0,
-  satisfactionRate: 0
+  satisfactionRate: 0,
+  trainingCompletionRate: 0
 });
 const loading = ref(true);
 const error = ref('');
@@ -437,6 +455,11 @@ onMounted(fetchProfile);
 
 .satisfaction-icon {
   background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: #fff;
+}
+
+.training-icon {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
   color: #fff;
 }
 
