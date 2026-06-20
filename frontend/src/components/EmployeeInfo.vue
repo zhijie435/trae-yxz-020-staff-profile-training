@@ -35,6 +35,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const employee = ref({
   name: '',
@@ -48,12 +51,35 @@ const initial = computed(() => {
   return employee.value.name ? employee.value.name.charAt(0) : '?';
 });
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'Authorization': token ? `Bearer ${token}` : ''
+  };
+};
+
+const handleAuthError = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('employeeInfo');
+  router.push('/login');
+};
+
 const fetchEmployeeInfo = async () => {
   loading.value = true;
   try {
-    const response = await axios.get('/api/employee');
+    const response = await axios.get('/api/employee', {
+      headers: getAuthHeaders()
+    });
+    if (response.status === 401) {
+      handleAuthError();
+      return;
+    }
     employee.value = response.data;
   } catch (error) {
+    if (error.response && error.response.status === 401) {
+      handleAuthError();
+      return;
+    }
     console.error('获取员工信息失败:', error);
   } finally {
     loading.value = false;

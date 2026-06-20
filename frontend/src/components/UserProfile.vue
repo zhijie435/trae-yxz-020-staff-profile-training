@@ -258,11 +258,31 @@ const initials = computed(() => {
   return profile.value.name.charAt(0);
 });
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': token ? `Bearer ${token}` : ''
+  };
+};
+
+const handleAuthError = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('employeeInfo');
+  router.push('/login');
+};
+
 const fetchProfile = async () => {
   loading.value = true;
   error.value = '';
   try {
-    const res = await fetch('/api/employee/profile');
+    const res = await fetch('/api/employee/profile', {
+      headers: getAuthHeaders()
+    });
+    if (res.status === 401) {
+      handleAuthError();
+      return;
+    }
     const result = await res.json();
     if (result.code === 0) {
       profile.value = result.data;
@@ -288,13 +308,17 @@ const passwordForm = ref({
 const handleLogout = async () => {
   if (!confirm('确定要退出登录吗？')) return;
   try {
-    await fetch('/api/employee/logout', { method: 'POST' });
+    await fetch('/api/employee/logout', {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
   } catch (e) {
     // ignore
   }
   localStorage.removeItem('token');
+  localStorage.removeItem('employeeInfo');
   alert('已退出登录');
-  window.location.reload();
+  router.push('/login');
 };
 
 const closePasswordModal = () => {
@@ -322,15 +346,20 @@ const handleChangePassword = async () => {
   try {
     const res = await fetch('/api/employee/change-password', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ oldPassword, newPassword })
     });
+    if (res.status === 401) {
+      handleAuthError();
+      return;
+    }
     const result = await res.json();
     if (result.code === 0) {
       alert('密码修改成功，请重新登录');
       closePasswordModal();
       localStorage.removeItem('token');
-      window.location.reload();
+      localStorage.removeItem('employeeInfo');
+      router.push('/login');
     } else {
       passwordError.value = result.message || '密码修改失败';
     }

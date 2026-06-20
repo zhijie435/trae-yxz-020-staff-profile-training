@@ -143,6 +143,20 @@ const goBack = () => {
   router.push('/');
 };
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': token ? `Bearer ${token}` : ''
+  };
+};
+
+const handleAuthError = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('employeeInfo');
+  router.push('/login');
+};
+
 const getTypeLabel = (type) => {
   const t = taskTypes.find(item => item.value === type);
   return t ? t.label : type;
@@ -168,7 +182,13 @@ const fetchTasks = async () => {
     if (filters.month) params.append('month', filters.month);
     if (filters.type) params.append('type', filters.type);
     if (filters.status) params.append('status', filters.status);
-    const res = await fetch(`/api/employee/tasks?${params.toString()}`);
+    const res = await fetch(`/api/employee/tasks?${params.toString()}`, {
+      headers: getAuthHeaders()
+    });
+    if (res.status === 401) {
+      handleAuthError();
+      return;
+    }
     const result = await res.json();
     if (result.code === 0) {
       tasks.value = result.data.list;

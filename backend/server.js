@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = 3001;
@@ -12,6 +13,7 @@ const employees = [
     id: 1,
     name: '张三',
     employeeId: 'EMP001',
+    password: '123456',
     completedTasks: 156,
     monthlyCompletedTasks: 24,
     deliveryRate: 96.5,
@@ -21,6 +23,7 @@ const employees = [
     id: 2,
     name: '李四',
     employeeId: 'EMP002',
+    password: '123456',
     completedTasks: 89,
     monthlyCompletedTasks: 18,
     deliveryRate: 92.3,
@@ -30,6 +33,7 @@ const employees = [
     id: 3,
     name: '王五',
     employeeId: 'EMP003',
+    password: '123456',
     completedTasks: 234,
     monthlyCompletedTasks: 32,
     deliveryRate: 98.7,
@@ -37,8 +41,72 @@ const employees = [
   }
 ];
 
-app.get('/api/employee/profile', (req, res) => {
-  const employee = employees[0];
+const activeTokens = new Map();
+
+function generateToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : req.headers['x-token'];
+
+  if (!token) {
+    return res.status(401).json({ code: -1, message: '未登录，请先登录' });
+  }
+
+  const employeeId = activeTokens.get(token);
+  if (!employeeId) {
+    return res.status(401).json({ code: -1, message: '登录已过期，请重新登录' });
+  }
+
+  const employee = employees.find(e => e.employeeId === employeeId);
+  if (!employee) {
+    return res.status(401).json({ code: -1, message: '用户不存在' });
+  }
+
+  req.employee = employee;
+  req.token = token;
+  next();
+}
+
+app.post('/api/employee/login', (req, res) => {
+  const { employeeId, password } = req.body;
+
+  if (!employeeId || !password) {
+    return res.json({ code: -1, message: '请输入工号和密码' });
+  }
+
+  const employee = employees.find(e => e.employeeId === employeeId);
+  if (!employee) {
+    return res.json({ code: -1, message: '工号或密码错误' });
+  }
+
+  if (employee.password !== password) {
+    return res.json({ code: -1, message: '工号或密码错误' });
+  }
+
+  const token = generateToken();
+  activeTokens.set(token, employee.employeeId);
+
+  res.json({
+    code: 0,
+    message: 'success',
+    data: {
+      token,
+      employee: {
+        id: employee.id,
+        name: employee.name,
+        employeeId: employee.employeeId
+      }
+    }
+  });
+});
+
+app.get('/api/employee/profile', authenticateToken, (req, res) => {
+  const employee = req.employee;
 
   const completedTasks = mockTasks.filter(t => t.status === 'completed').length;
   const cancelledTasks = mockTasks.filter(t => t.status === 'cancelled').length;
@@ -73,7 +141,7 @@ app.get('/api/employee/profile', (req, res) => {
   });
 });
 
-app.get('/api/employee/:id', (req, res) => {
+app.get('/api/employee/:id', authenticateToken, (req, res) => {
   const employeeId = parseInt(req.params.id);
   const employee = employees.find(e => e.id === employeeId);
   
@@ -88,8 +156,8 @@ app.get('/api/employee/:id', (req, res) => {
   });
 });
 
-app.get('/api/employee', (req, res) => {
-  const employee = employees[0];
+app.get('/api/employee', authenticateToken, (req, res) => {
+  const employee = req.employee;
   res.json({
     name: employee.name,
     employeeId: employee.employeeId,
@@ -97,22 +165,37 @@ app.get('/api/employee', (req, res) => {
   });
 });
 
-app.post('/api/employee/logout', (req, res) => {
+app.post('/api/employee/logout', authenticateToken, (req, res) => {
+  activeTokens.delete(req.token);
   res.json({ code: 0, message: 'success' });
 });
 
-app.post('/api/employee/change-password', (req, res) => {
+function invalidateEmployeeTokens(employeeId) {
+  for (const [token, eid] of activeTokens.entries()) {
+    if (eid === employeeId) {
+      activeTokens.delete(token);
+    }
+  }
+}
+
+app.post('/api/employee/change-password', authenticateToken, (req, res) => {
   const { oldPassword, newPassword } = req.body;
+  const employee = req.employee;
+
   if (!oldPassword || !newPassword) {
     return res.json({ code: -1, message: '请填写所有密码字段' });
   }
   if (newPassword.length < 6) {
     return res.json({ code: -1, message: '新密码长度至少6位' });
   }
-  if (oldPassword !== '123456') {
+  if (oldPassword !== employee.password) {
     return res.json({ code: -1, message: '当前密码不正确' });
   }
-  res.json({ code: 0, message: 'success' });
+
+  employee.password = newPassword;
+  invalidateEmployeeTokens(employee.employeeId);
+
+  res.json({ code: 0, message: '密码修改成功，请重新登录' });
 });
 
 const taskTypes = ['delivery', 'install', 'service', 'training'];
@@ -154,7 +237,7 @@ function generateMockTasks() {
 
 const mockTasks = generateMockTasks();
 
-app.get('/api/employee/tasks', (req, res) => {
+app.get('/api/employee/tasks', authenticateToken, (req, res) => {
   const { month, type, status } = req.query;
   let filtered = [...mockTasks];
   if (month) {
