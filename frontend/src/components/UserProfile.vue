@@ -135,6 +135,21 @@
             <polyline points="9 18 15 12 9 6"/>
           </svg>
         </div>
+
+        <div class="feature-item" @click="handleFeatureClick('trainingManage')">
+          <div class="feature-icon feature-training-manage">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </div>
+          <div class="feature-label">在线培训资料管理</div>
+          <svg class="feature-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+        </div>
       </div>
     </div>
 
@@ -327,10 +342,21 @@ const featureNames = {
   tasks: '我的任务记录',
   help: '帮助中心',
   contact: '联系门店管理员',
-  training: '在线培训资料'
+  training: '在线培训资料',
+  trainingManage: '在线培训资料管理'
+};
+
+const featureUrls = {
+  trainingManage: 'https://hq-admin.example.com/training'
 };
 
 const handleFeatureClick = (feature) => {
+  if (feature === 'trainingManage') {
+    const url = featureUrls[feature];
+    console.log(`跳转到总部后台：${url}`);
+    window.open(url, '_blank');
+    return;
+  }
   console.log(`点击功能入口：${featureNames[feature]}`);
   alert(`即将进入：${featureNames[feature]}`);
 };
@@ -603,6 +629,11 @@ onMounted(fetchProfile);
   color: #fff;
 }
 
+.feature-training-manage {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
 .feature-label {
   flex: 1;
   font-size: 15px;
@@ -614,6 +645,13 @@ onMounted(fetchProfile);
   width: 18px;
   height: 18px;
   color: #ccc;
+  flex-shrink: 0;
+}
+
+.feature-external {
+  width: 18px;
+  height: 18px;
+  color: #999;
   flex-shrink: 0;
 }
 
