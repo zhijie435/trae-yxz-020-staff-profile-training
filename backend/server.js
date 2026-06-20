@@ -77,6 +77,24 @@ app.get('/api/employee', (req, res) => {
   });
 });
 
+app.post('/api/employee/logout', (req, res) => {
+  res.json({ code: 0, message: 'success' });
+});
+
+app.post('/api/employee/change-password', (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword) {
+    return res.json({ code: -1, message: '请填写所有密码字段' });
+  }
+  if (newPassword.length < 6) {
+    return res.json({ code: -1, message: '新密码长度至少6位' });
+  }
+  if (oldPassword !== '123456') {
+    return res.json({ code: -1, message: '当前密码不正确' });
+  }
+  res.json({ code: 0, message: 'success' });
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

@@ -138,6 +138,85 @@
       </div>
     </div>
 
+    <div class="settings-section">
+      <h3 class="section-title">设置</h3>
+      <div class="settings-grid">
+        <div class="settings-item" @click="showPasswordModal = true">
+          <div class="settings-icon settings-password">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <div class="settings-label">修改密码</div>
+          <svg class="settings-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
+
+        <div class="settings-item settings-item-danger" @click="handleLogout">
+          <div class="settings-icon settings-logout">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </div>
+          <div class="settings-label">退出登录</div>
+          <svg class="settings-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" v-if="showPasswordModal" @click.self="closePasswordModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>修改密码</h3>
+          <div class="modal-close" @click="closePasswordModal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>当前密码</label>
+            <input
+              type="password"
+              v-model="passwordForm.oldPassword"
+              placeholder="请输入当前密码"
+            />
+          </div>
+          <div class="form-group">
+            <label>新密码</label>
+            <input
+              type="password"
+              v-model="passwordForm.newPassword"
+              placeholder="请输入新密码（至少6位）"
+            />
+          </div>
+          <div class="form-group">
+            <label>确认新密码</label>
+            <input
+              type="password"
+              v-model="passwordForm.confirmPassword"
+              placeholder="请再次输入新密码"
+            />
+          </div>
+          <div class="form-error" v-if="passwordError">{{ passwordError }}</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-cancel" @click="closePasswordModal">取消</button>
+          <button class="btn btn-confirm" @click="handleChangePassword" :disabled="passwordSubmitting">
+            {{ passwordSubmitting ? '提交中...' : '确认修改' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="error-message" v-if="error">{{ error }}</div>
   </div>
 </template>
@@ -176,6 +255,71 @@ const fetchProfile = async () => {
     error.value = '网络请求失败，请稍后重试';
   } finally {
     loading.value = false;
+  }
+};
+
+const showPasswordModal = ref(false);
+const passwordSubmitting = ref(false);
+const passwordError = ref('');
+const passwordForm = ref({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+});
+
+const handleLogout = async () => {
+  if (!confirm('确定要退出登录吗？')) return;
+  try {
+    await fetch('/api/employee/logout', { method: 'POST' });
+  } catch (e) {
+    // ignore
+  }
+  localStorage.removeItem('token');
+  alert('已退出登录');
+  window.location.reload();
+};
+
+const closePasswordModal = () => {
+  showPasswordModal.value = false;
+  passwordError.value = '';
+  passwordForm.value = { oldPassword: '', newPassword: '', confirmPassword: '' };
+};
+
+const handleChangePassword = async () => {
+  const { oldPassword, newPassword, confirmPassword } = passwordForm.value;
+  if (!oldPassword || !newPassword || !confirmPassword) {
+    passwordError.value = '请填写所有密码字段';
+    return;
+  }
+  if (newPassword.length < 6) {
+    passwordError.value = '新密码长度至少6位';
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    passwordError.value = '两次输入的新密码不一致';
+    return;
+  }
+  passwordError.value = '';
+  passwordSubmitting.value = true;
+  try {
+    const res = await fetch('/api/employee/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldPassword, newPassword })
+    });
+    const result = await res.json();
+    if (result.code === 0) {
+      alert('密码修改成功，请重新登录');
+      closePasswordModal();
+      localStorage.removeItem('token');
+      window.location.reload();
+    } else {
+      passwordError.value = result.message || '密码修改失败';
+    }
+  } catch (e) {
+    passwordError.value = '网络请求失败，请稍后重试';
+  } finally {
+    passwordSubmitting.value = false;
   }
 };
 
@@ -480,5 +624,218 @@ onMounted(fetchProfile);
   50% {
     opacity: 1;
   }
+}
+
+.settings-section {
+  padding: 0 16px 24px;
+}
+
+.settings-grid {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f5f5f5;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.settings-item:last-child {
+  border-bottom: none;
+}
+
+.settings-item:active {
+  background-color: #f9f9f9;
+}
+
+.settings-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.settings-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.settings-password {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: #fff;
+}
+
+.settings-logout {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: #fff;
+}
+
+.settings-label {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+}
+
+.settings-item-danger .settings-label {
+  color: #ff4d4f;
+}
+
+.settings-arrow {
+  width: 18px;
+  height: 18px;
+  color: #ccc;
+  flex-shrink: 0;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.modal-close:hover {
+  background-color: #f5f5f5;
+}
+
+.modal-close svg {
+  width: 20px;
+  height: 20px;
+  color: #999;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group:last-of-type {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.form-group input {
+  width: 100%;
+  height: 44px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 15px;
+  color: #333;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  border-color: #4a90e2;
+}
+
+.form-group input::placeholder {
+  color: #bbb;
+}
+
+.form-error {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #ff4d4f;
+  text-align: center;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 0 24px 24px;
+}
+
+.btn {
+  flex: 1;
+  height: 44px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+}
+
+.btn:active {
+  opacity: 0.8;
+}
+
+.btn-cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.btn-confirm {
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  color: #fff;
+}
+
+.btn-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
