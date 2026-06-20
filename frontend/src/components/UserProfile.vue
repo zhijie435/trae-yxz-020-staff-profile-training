@@ -238,6 +238,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const profile = ref({
   name: '',
@@ -351,6 +354,10 @@ const featureUrls = {
 };
 
 const handleFeatureClick = (feature) => {
+  if (feature === 'tasks') {
+    router.push('/tasks');
+    return;
+  }
   if (feature === 'trainingManage') {
     const url = featureUrls[feature];
     console.log(`跳转到总部后台：${url}`);

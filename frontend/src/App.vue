@@ -1,11 +1,10 @@
 <template>
   <div class="app-container">
-    <UserProfile />
+    <router-view />
   </div>
 </template>
 
 <script setup>
-import UserProfile from './components/UserProfile.vue';
 </script>
 
 <style scoped>

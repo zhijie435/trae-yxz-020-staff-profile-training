@@ -95,6 +95,68 @@ app.post('/api/employee/change-password', (req, res) => {
   res.json({ code: 0, message: 'success' });
 });
 
+const taskTypes = ['delivery', 'install', 'service', 'training'];
+const statuses = ['completed', 'in_progress', 'pending', 'cancelled'];
+const statusLabels = {
+  delivery: '配送',
+  install: '安装',
+  service: '服务',
+  training: '培训'
+};
+
+function generateMockTasks() {
+  const tasks = [];
+  const now = new Date();
+  for (let i = 0; i < 50; i++) {
+    const daysAgo = Math.floor(Math.random() * 60);
+    const taskDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+    const type = taskTypes[Math.floor(Math.random() * taskTypes.length)];
+    const status = Math.random() > 0.15 ? statuses[Math.floor(Math.random() * 3)] : statuses[3];
+    const completedAt = status === 'completed'
+      ? taskDate.toISOString().slice(0, 10)
+      : null;
+    const score = status === 'completed' && Math.random() > 0.3
+      ? (Math.floor(Math.random() * 3) + 3) * 20
+      : null;
+    tasks.push({
+      id: i + 1,
+      taskNo: `T${String(20260000 + i + 1)}`,
+      title: `${statusLabels[type]}任务-${i + 1}`,
+      type,
+      status,
+      month: `${taskDate.getFullYear()}-${String(taskDate.getMonth() + 1).padStart(2, '0')}`,
+      completedAt,
+      score
+    });
+  }
+  return tasks;
+}
+
+const mockTasks = generateMockTasks();
+
+app.get('/api/employee/tasks', (req, res) => {
+  const { month, type, status } = req.query;
+  let filtered = [...mockTasks];
+  if (month) {
+    filtered = filtered.filter(t => t.month === month);
+  }
+  if (type) {
+    filtered = filtered.filter(t => t.type === type);
+  }
+  if (status) {
+    filtered = filtered.filter(t => t.status === status);
+  }
+  filtered.sort((a, b) => b.id - a.id);
+  res.json({
+    code: 0,
+    message: 'success',
+    data: {
+      list: filtered,
+      total: filtered.length
+    }
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
