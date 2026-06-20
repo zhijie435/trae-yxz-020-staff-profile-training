@@ -12,19 +12,28 @@ const employees = [
     id: 1,
     name: '张三',
     employeeId: 'EMP001',
-    completedTasks: 156
+    completedTasks: 156,
+    monthlyCompletedTasks: 24,
+    deliveryRate: 96.5,
+    satisfactionRate: 98.2
   },
   {
     id: 2,
     name: '李四',
     employeeId: 'EMP002',
-    completedTasks: 89
+    completedTasks: 89,
+    monthlyCompletedTasks: 18,
+    deliveryRate: 92.3,
+    satisfactionRate: 95.8
   },
   {
     id: 3,
     name: '王五',
     employeeId: 'EMP003',
-    completedTasks: 234
+    completedTasks: 234,
+    monthlyCompletedTasks: 32,
+    deliveryRate: 98.7,
+    satisfactionRate: 99.1
   }
 ];
 
@@ -36,7 +45,10 @@ app.get('/api/employee/profile', (req, res) => {
     data: {
       name: employee.name,
       employeeId: employee.employeeId,
-      completedTasks: employee.completedTasks
+      completedTasks: employee.completedTasks,
+      monthlyCompletedTasks: employee.monthlyCompletedTasks,
+      deliveryRate: employee.deliveryRate,
+      satisfactionRate: employee.satisfactionRate
     }
   });
 });

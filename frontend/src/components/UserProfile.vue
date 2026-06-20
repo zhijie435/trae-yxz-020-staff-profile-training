@@ -15,10 +15,69 @@
     </div>
 
     <div class="stats-section">
-      <div class="stat-card">
+      <div class="stat-card main-stat">
         <div class="stat-value" v-if="!loading">{{ profile.completedTasks }}</div>
         <div class="stat-value skeleton-value" v-else></div>
         <div class="stat-label">累计完成任务数</div>
+      </div>
+    </div>
+
+    <div class="task-stats-section">
+      <h3 class="section-title">任务统计</h3>
+      <div class="task-stats-grid">
+        <div class="task-stat-card">
+          <div class="task-stat-icon monthly-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <div class="task-stat-info">
+            <div class="task-stat-value" v-if="!loading">
+              <span class="number">{{ profile.monthlyCompletedTasks }}</span>
+              <span class="unit">个</span>
+            </div>
+            <div class="task-stat-value skeleton-value" v-else></div>
+            <div class="task-stat-label">本月完成任务</div>
+          </div>
+        </div>
+
+        <div class="task-stat-card">
+          <div class="task-stat-icon delivery-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 16V14L13 9V3.5C13 2.67 12.33 2 11.5 2C10.67 2 10 2.67 10 3.5V9L7 14V16"/>
+              <rect x="5" y="16" width="14" height="6" rx="2"/>
+              <circle cx="8.5" cy="20" r="1.5"/>
+              <circle cx="15.5" cy="20" r="1.5"/>
+            </svg>
+          </div>
+          <div class="task-stat-info">
+            <div class="task-stat-value" v-if="!loading">
+              <span class="number">{{ profile.deliveryRate }}</span>
+              <span class="unit">%</span>
+            </div>
+            <div class="task-stat-value skeleton-value" v-else></div>
+            <div class="task-stat-label">交付完成率</div>
+          </div>
+        </div>
+
+        <div class="task-stat-card">
+          <div class="task-stat-icon satisfaction-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+          </div>
+          <div class="task-stat-info">
+            <div class="task-stat-value" v-if="!loading">
+              <span class="number">{{ profile.satisfactionRate }}</span>
+              <span class="unit">%</span>
+            </div>
+            <div class="task-stat-value skeleton-value" v-else></div>
+            <div class="task-stat-label">用户好评率</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -32,7 +91,10 @@ import { ref, computed, onMounted } from 'vue';
 const profile = ref({
   name: '',
   employeeId: '',
-  completedTasks: 0
+  completedTasks: 0,
+  monthlyCompletedTasks: 0,
+  deliveryRate: 0,
+  satisfactionRate: 0
 });
 const loading = ref(true);
 const error = ref('');
@@ -167,6 +229,101 @@ onMounted(fetchProfile);
   color: #ff4d4f;
   font-size: 14px;
   text-align: center;
+}
+
+.task-stats-section {
+  padding: 20px 16px 0;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.task-stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.task-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.task-stat-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.monthly-icon {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
+.delivery-icon {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: #fff;
+}
+
+.satisfaction-icon {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: #fff;
+}
+
+.task-stat-info {
+  flex: 1;
+}
+
+.task-stat-value {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.task-stat-value .number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  line-height: 1.2;
+}
+
+.task-stat-value .unit {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.task-stat-value.skeleton-value {
+  width: 100px;
+  height: 28px;
+  background: #f0f2f5;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.task-stat-label {
+  font-size: 13px;
+  color: #999;
 }
 
 @keyframes pulse {
