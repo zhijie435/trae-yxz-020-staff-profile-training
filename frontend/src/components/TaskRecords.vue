@@ -96,6 +96,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import api from '../utils/api';
 
 const router = useRouter();
 
@@ -143,20 +144,6 @@ const goBack = () => {
   router.push('/');
 };
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': token ? `Bearer ${token}` : ''
-  };
-};
-
-const handleAuthError = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('employeeInfo');
-  router.push('/login');
-};
-
 const getTypeLabel = (type) => {
   const t = taskTypes.find(item => item.value === type);
   return t ? t.label : type;
@@ -178,26 +165,13 @@ const fetchTasks = async () => {
   loading.value = true;
   error.value = '';
   try {
-    const params = new URLSearchParams();
-    if (filters.month) params.append('month', filters.month);
-    if (filters.type) params.append('type', filters.type);
-    if (filters.status) params.append('status', filters.status);
-    const res = await fetch(`/api/employee/tasks?${params.toString()}`, {
-      headers: getAuthHeaders()
-    });
-    if (res.status === 401) {
-      handleAuthError();
-      return;
-    }
-    const result = await res.json();
-    if (result.code === 0) {
+    const result = await api.tasks.getList(filters, router);
+    if (result && result.code === 0) {
       tasks.value = result.data.list;
       total.value = result.data.total;
     } else {
-      error.value = result.message || '获取数据失败';
+      error.value = result?.message || '获取数据失败';
     }
-  } catch (e) {
-    error.value = '网络请求失败，请稍后重试';
   } finally {
     loading.value = false;
   }

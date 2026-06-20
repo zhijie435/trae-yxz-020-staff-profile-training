@@ -50,6 +50,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import api from '../utils/api';
 
 const router = useRouter();
 
@@ -72,22 +73,14 @@ const handleLogin = async () => {
   submitting.value = true;
 
   try {
-    const res = await fetch('/api/employee/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ employeeId, password })
-    });
-    const result = await res.json();
-
-    if (result.code === 0) {
+    const result = await api.auth.login({ employeeId, password });
+    if (result && result.code === 0) {
       localStorage.setItem('token', result.data.token);
       localStorage.setItem('employeeInfo', JSON.stringify(result.data.employee));
       router.push('/');
     } else {
-      error.value = result.message || '登录失败';
+      error.value = result?.message || '登录失败';
     }
-  } catch (e) {
-    error.value = '网络请求失败，请稍后重试';
   } finally {
     submitting.value = false;
   }
